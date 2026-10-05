@@ -63,6 +63,10 @@ export const Platform = { isMobile: false };
 export class ButtonComponent {}
 export class Setting {}
 
+export class PluginSettingTab {
+	constructor(readonly app: unknown, _plugin: unknown) {}
+}
+
 export class FuzzySuggestModal<T> {
 	constructor(readonly app: unknown) {}
 	setPlaceholder(_placeholder: string): void {}

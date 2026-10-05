@@ -1,7 +1,7 @@
 # Advanced Bookmarks
 
 Advanced Bookmarks adds dynamic folders and folder notes to Obsidian's built-in Bookmarks. 
-Your existing bookmarks appear in the same sidebar.
+Your existing bookmarks appear in the same sidebar. Requires Obsidian 1.13.0 or later.
 
 ## Features
 

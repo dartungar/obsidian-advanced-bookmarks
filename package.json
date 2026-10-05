@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-advanced-bookmarks",
-	"version": "0.4.2",
+	"version": "0.4.4",
 	"description": "Nested dynamic bookmark folders and bookmark folder notes for Obsidian",
 	"main": "main.js",
 	"type": "module",
@@ -21,7 +21,7 @@
 		"eslint-plugin-obsidianmd": "^0.4.0",
 		"globals": "^17.6.0",
 		"jiti": "^2.6.1",
-		"obsidian": "latest",
+		"obsidian": "^1.13.1",
 		"typescript": "^5.8.3",
 		"typescript-eslint": "^8.59.1"
 	}

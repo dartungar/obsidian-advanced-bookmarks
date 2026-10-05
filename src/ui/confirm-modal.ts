@@ -6,7 +6,7 @@ export class ConfirmModal extends Modal {
 		this.setTitle(`Delete ${this.name}?`);
 		this.contentEl.createEl('p', { text: 'This removes the folder and its nested custom folders. Vault notes and built-in bookmarks are kept.' });
 		new Setting(this.contentEl).addButton((button) => button.setButtonText('Cancel').onClick(() => this.close()))
-			.addButton((button) => button.setButtonText('Delete folder').setWarning().onClick(async () => {
+			.addButton((button) => button.setButtonText('Delete folder').setDestructive().onClick(async () => {
 				button.setDisabled(true);
 				await this.remove();
 				this.close();

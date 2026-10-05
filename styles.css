@@ -1,7 +1,8 @@
 /* Obsidian's tree-item, nav-header, clickable-icon, Setting and modal classes
    supply colors, hover states, padding and controls. Only layout is custom. */
 .ab-view { display: flex; flex-direction: column; padding: 0; }
-.ab-view [hidden], .ab-folder-modal [hidden] { display: none !important; }
+.ab-view .nav-header .search-input-container[hidden],
+.ab-folder-modal .setting-item[hidden] { display: none; }
 .ab-tree { flex: 1; min-height: 0; overflow: auto; padding: var(--size-4-2); }
 .ab-view .tree-item-inner { flex: 1; min-width: 0; white-space: nowrap; text-overflow: ellipsis; }
 .ab-view .tree-item-self { align-items: center; }

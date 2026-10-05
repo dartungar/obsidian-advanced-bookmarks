@@ -6,3 +6,4 @@ import './order.test';
 import './current-tab.test';
 import './bookmark-menu.test';
 import './tree-menu.test';
+import './settings.test';
