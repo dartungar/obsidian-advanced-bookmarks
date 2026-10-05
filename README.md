@@ -1,12 +1,18 @@
 # Advanced Bookmarks
 
-Advanced Bookmarks adds dynamic folders and folder notes to Obsidian's built-in Bookmarks. 
-Your existing bookmarks appear in the same sidebar. Requires Obsidian 1.13.0 or later.
+Advanced Bookmarks expands core Bookmarks plugin with dynamic folders and folder notes. 
+Core bookmarks still appear in the same sidebar.
 
 ## Features
 
 Dynamic folders are bookmark folders that automatically list notes matching your rules. 
 For example, a **Projects** folder can show every note tagged `#project` whose `status` property is `active`. 
+
+<img width="305" height="241" alt="image" src="https://github.com/user-attachments/assets/9f8db37f-f39a-4bf3-b27e-6ba1f0b8a9dd" />
+<br/>
+
+<img width="587" height="616" alt="image" src="https://github.com/user-attachments/assets/96c42dee-09aa-4f97-8d37-b8592226cbeb" />
+
 
 - Gather notes by tag, vault folder, name, or property. Combine rules with all/any matching and exclusions.
 - Show notes from a specific view in a `.base` file.
