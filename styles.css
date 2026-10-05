@@ -1,8 +1,23 @@
-/*
-
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
-
-If your plugin does not need CSS, delete this file.
-
-*/
+/* Obsidian's tree-item, nav-header, clickable-icon, Setting and modal classes
+   supply colors, hover states, padding and controls. Only layout is custom. */
+.ab-view { display: flex; flex-direction: column; padding: 0; }
+.ab-view [hidden], .ab-folder-modal [hidden] { display: none !important; }
+.ab-tree { flex: 1; min-height: 0; overflow: auto; padding: var(--size-4-2); }
+.ab-view .tree-item-inner { flex: 1; min-width: 0; white-space: nowrap; text-overflow: ellipsis; }
+.ab-view .tree-item-self { align-items: center; }
+.ab-view .tree-item-self:focus-visible { box-shadow: 0 0 0 2px var(--background-modifier-border-focus); outline: none; }
+.ab-view .tree-item-self > .ab-icon-button { flex-shrink: 0; padding: var(--size-2-1); margin-inline-start: var(--size-2-1); }
+.ab-status:empty { display: none; }
+.ab-status, .ab-empty { padding: var(--size-4-2); font-size: var(--font-ui-small); color: var(--text-muted); }
+.ab-help { font-size: var(--font-ui-small); color: var(--text-muted); }
+.ab-load-more { margin: var(--size-4-1); font-size: var(--font-ui-small); }
+.ab-view .ab-drop-before { box-shadow: inset 0 2px var(--interactive-accent); }
+.ab-view .ab-drop-after { box-shadow: inset 0 -2px var(--interactive-accent); }
+.ab-folder-modal .ab-rule { margin-block: var(--size-4-3); }
+.ab-folder-modal .ab-preview { margin-block: var(--size-4-3); font-size: var(--font-ui-small); color: var(--text-muted); }
+.ab-folder-modal .setting-item-control { min-width: 0; }
+.ab-folder-modal select { max-width: 100%; }
+@media (max-width: 600px) {
+  .ab-folder-modal .setting-item { flex-direction: column; align-items: stretch; gap: var(--size-4-2); }
+  .ab-folder-modal .setting-item-control { justify-content: flex-start; flex-wrap: wrap; }
+}

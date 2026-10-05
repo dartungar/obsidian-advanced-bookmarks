@@ -12,6 +12,7 @@ export default defineConfig(
 		'main.js',
 		'package.json',
 		'package-lock.json',
+		'scripts/test.mjs',
 		'tsconfig.json',
 	]),
 	{
@@ -29,4 +30,12 @@ export default defineConfig(
 		},
 	},
 	...obsidianmd.configs.recommended,
+	{
+		files: ['tests/**/*.ts'],
+		rules: {
+			// These files run in Node, and are never part of the mobile plugin bundle.
+			'obsidianmd/no-nodejs-modules': 'off',
+			'obsidianmd/no-global-this': 'off',
+		},
+	},
 );
