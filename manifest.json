@@ -1,7 +1,7 @@
 {
 	"id": "advanced-bookmarks",
 	"name": "Advanced Bookmarks",
-	"version": "0.4.6",
+	"version": "0.4.7",
 	"minAppVersion": "1.13.0",
 	"description": "Extend bookmarks with nested dynamic folders, Base views, sorting, and bookmark folder notes.",
 	"isDesktopOnly": false,
