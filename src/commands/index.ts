@@ -1,6 +1,7 @@
 import type AdvancedBookmarksPlugin from '../main';
 import { FolderModal } from '../ui/folder-modal';
 import { AdvancedBookmarksView, VIEW_TYPE } from '../ui/view';
+import { registerOpenBookmarksCommand } from './open-command';
 
 export async function openBookmarks(plugin: AdvancedBookmarksPlugin): Promise<void> {
 	let leaf = plugin.app.workspace.getLeavesOfType(VIEW_TYPE)[0];
@@ -14,7 +15,7 @@ export async function openBookmarks(plugin: AdvancedBookmarksPlugin): Promise<vo
 
 export function registerCommands(plugin: AdvancedBookmarksPlugin): void {
 	plugin.addRibbonIcon('bookmark-check', 'Open advanced bookmarks', () => { void openBookmarks(plugin); });
-	plugin.addCommand({ id: 'open-advanced-bookmarks', name: 'Open bookmarks', callback: () => openBookmarks(plugin) });
+	registerOpenBookmarksCommand(plugin, () => openBookmarks(plugin));
 	plugin.addCommand({ id: 'bookmark-current-tab', name: 'Bookmark current tab', checkCallback: (checking) => checking
 		? plugin.controller.core.canBookmarkCurrentTab() : plugin.controller.core.bookmarkCurrentTab() });
 	for (const collapsed of [true, false]) plugin.addCommand({

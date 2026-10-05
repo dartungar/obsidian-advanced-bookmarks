@@ -31,6 +31,13 @@ export default defineConfig(
 	},
 	...obsidianmd.configs.recommended,
 	{
+		files: ['src/commands/open-command.ts'],
+		rules: {
+			// This module registers only the released open command; its ID must stay stable for saved hotkeys.
+			'obsidianmd/commands/no-plugin-id-in-command-id': 'off',
+		},
+	},
+	{
 		files: ['tests/**/*.ts'],
 		rules: {
 			// These files run in Node, and are never part of the mobile plugin bundle.
