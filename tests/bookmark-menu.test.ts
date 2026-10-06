@@ -6,6 +6,20 @@ import { CoreBookmarkMenus } from '../src/bookmarks/menu';
 import { BookmarkRenameModal } from '../src/ui/bookmark-rename-modal';
 import { Menu, Modal, Notice } from './obsidian-stub';
 
+// Model constructor-time DOM attachment without loading the native view.
+class Container {
+	children: Container[] = [];
+	parent: Container | null = null;
+	removed = false;
+	ownerDocument = { createElement: (_tag: string) => new Container() };
+	appendChild(child: Container): void { this.children.push(child); child.parent = this; }
+	remove(): void {
+		this.removed = true;
+		if (this.parent) this.parent.children = this.parent.children.filter((child) => child !== this);
+		this.parent = null;
+	}
+}
+
 function fixture() {
 	const file = { type: 'file', ctime: 1, path: 'Note.md', subpath: '#Heading', title: 'Note' };
 	const group = { type: 'group', ctime: 2, title: 'Group', items: [file] };
@@ -18,8 +32,8 @@ function fixture() {
 		removeItem: (item: unknown) => { removed.push(item); },
 	};
 	const view = {
-		plugin, tree: { selectedDoms: new Set(['unrelated selection']) }, unloaded: 0, domRemoved: 0, loaded: 0,
-		load() { this.loaded++; }, unload() { this.unloaded++; }, containerEl: { remove() { view.domRemoved++; } },
+		plugin, tree: { selectedDoms: new Set(['unrelated selection']) }, unloaded: 0, loaded: 0,
+		load() { this.loaded++; }, unload() { this.unloaded++; }, containerEl: new Container(),
 		createNewGroup(this: { plugin: typeof plugin; update: () => void; getItemDom: (item: unknown) => { startRename: () => void } }, _parent: unknown) {
 			const item = { type: 'group', ctime: 3, title: 'New group', items: [] }; this.plugin.items.push(item);
 			this.update(); this.getItemDom(item).startRename();
@@ -38,19 +52,29 @@ function fixture() {
 		} }; },
 	};
 	const leaves = [{ view }];
+	const liveContainer = new Container(), advancedContent = new Container();
+	liveContainer.appendChild(advancedContent);
+	const leaf = { containerEl: liveContainer, view: { type: 'advanced-bookmarks' } };
+	let factoryLeaf: typeof leaf | null = null;
 	let factories = 0;
 	const app = { internalPlugins: { plugins: { bookmarks: { enabled: true, instance: plugin } } },
 		workspace: { getLeavesOfType: () => leaves, on(_name: string, callback: (...args: unknown[]) => unknown) {
 			handlers.add(callback); return { callback };
 		}, offref(ref: { callback: (...args: unknown[]) => unknown }) { handlers.delete(ref.callback); } },
-		viewRegistry: { getViewCreatorByType: () => () => { factories++; return view; } },
+		viewRegistry: { getViewCreatorByType: () => (menuLeaf: typeof leaf) => {
+			factories++; factoryLeaf = menuLeaf;
+			menuLeaf.containerEl.appendChild(view.containerEl);
+			// A native toolbar can change its leaf's view even before load/onOpen.
+			view.containerEl.appendChild(new Container());
+			return view;
+		} },
 	};
 	const core = new CoreBookmarks(app as unknown as App, () => {});
 	const menus = new CoreBookmarkMenus(app as unknown as App, core);
 	const show = (id = 'core:file:1', extend?: Parameters<CoreBookmarkMenus['show']>[4]) => menus.show(id,
-		{} as HTMLElement, {} as WorkspaceLeaf, {} as MouseEvent, extend);
+		{} as HTMLElement, leaf as unknown as WorkspaceLeaf, {} as MouseEvent, extend);
 	return { app, core, menus, show, file, group, plugin, view, leaves, handlers, opened, removed, edited, saves,
-		factories: () => factories };
+		factories: () => factories, leaf, liveContainer, advancedContent, factoryLeaf: () => factoryLeaf };
 }
 
 void test('native bookmark menu keeps target identity, subpaths, opening modes, editing, removal, and group extensions', () => {
@@ -94,7 +118,43 @@ void test('closed core pane uses a reusable unloaded native view with disposal; 
 	assert.equal(source.show('core:file:99'), false);
 	source.app.internalPlugins.plugins.bookmarks.enabled = false;
 	assert.equal(source.show(), false);
-	source.menus.unload(); assert.equal(source.view.unloaded, 1); assert.equal(source.view.domRemoved, 1);
+	const detachedContainer = source.factoryLeaf()!.containerEl;
+	source.menus.unload(); assert.equal(source.view.unloaded, 1); assert.equal(detachedContainer.removed, true);
+	assert.equal(source.liveContainer.removed, false);
 	const broken = fixture(); broken.view.getItemDom = () => { throw new Error('changed contract'); };
 	assert.equal(broken.show(), false); assert.equal(broken.handlers.size, 0);
+});
+
+void test('native menu construction and disposal leave the advanced pane DOM and view untouched', () => {
+	const source = fixture(); source.leaves.splice(0); source.menus.load();
+	const advancedView = source.leaf.view;
+	assert.equal(source.show('core:group:2'), true);
+	const menuLeaf = source.factoryLeaf()!;
+	assert.notEqual(menuLeaf, source.leaf);
+	assert.notEqual(menuLeaf.containerEl, source.liveContainer);
+	assert.equal(menuLeaf.containerEl.parent, null);
+	assert.deepEqual(menuLeaf.containerEl.children, [source.view.containerEl]);
+	assert.deepEqual(source.liveContainer.children, [source.advancedContent]);
+	menuLeaf.view = { type: 'bookmarks' };
+	assert.equal(source.leaf.view, advancedView);
+	Menu.shown.at(-1)!.items.find((item) => item.title === 'New group')!.callback!();
+	assert.ok(Modal.opened.at(-1) instanceof BookmarkRenameModal);
+	assert.equal(source.show(), true); assert.equal(source.factories(), 1);
+	source.menus.unload();
+	assert.equal(menuLeaf.containerEl.removed, true);
+	assert.deepEqual(source.liveContainer.children, [source.advancedContent]);
+	assert.equal(source.leaf.view, advancedView);
+});
+
+void test('a failed native constructor cleans up only its detached container', () => {
+	const source = fixture(); source.leaves.splice(0);
+	const factory = source.app.viewRegistry.getViewCreatorByType();
+	source.app.viewRegistry.getViewCreatorByType = () => (leaf) => {
+		factory(leaf); throw new Error('Native constructor failed');
+	};
+	assert.equal(source.show(), false);
+	assert.equal(source.factoryLeaf()!.containerEl.removed, true);
+	assert.deepEqual(source.liveContainer.children, [source.advancedContent]);
+	assert.equal(source.liveContainer.removed, false);
+	assert.equal(source.handlers.size, 0);
 });

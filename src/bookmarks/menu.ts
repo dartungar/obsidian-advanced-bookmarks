@@ -4,31 +4,48 @@ import type { CoreBookmarks } from './core';
 import { BookmarkRenameModal } from '../ui/bookmark-rename-modal';
 
 type NativeView = Component & { plugin: unknown; containerEl: HTMLElement; getItemDom: (item: unknown) => unknown; createNewGroup?: (parent: unknown) => void };
+type MenuLeaf = WorkspaceLeaf & { containerEl: HTMLElement };
 
 /** Reuse core's menu builder and edit dialog without changing its pane or selection. */
 export class CoreBookmarkMenus extends Component {
-	private detached: NativeView | null = null;
+	private detached: { view: NativeView; containerEl: HTMLElement } | null = null;
 	constructor(private app: App, private core: CoreBookmarks) { super(); }
 
 	onunload(): void { this.dispose(); }
 	private dispose(): void {
-		this.detached?.unload(); this.detached?.containerEl.remove(); this.detached = null;
+		const detached = this.detached;
+		this.detached = null;
+		if (detached) {
+			try { detached.view.unload(); }
+			finally { detached.containerEl.remove(); }
+		}
 	}
 	private view(plugin: unknown, leaf: WorkspaceLeaf): NativeView | null {
 		for (const entry of this.app.workspace.getLeavesOfType('bookmarks')) {
 			const view = entry.view as unknown as NativeView;
 			if (view.plugin === plugin && typeof view.getItemDom === 'function') return view;
 		}
-		if (this.detached?.plugin !== plugin) this.dispose();
+		if (this.detached?.view.plugin !== plugin) this.dispose();
 		if (!this.detached) {
 			const registry = record((this.app as unknown as { viewRegistry?: unknown }).viewRegistry);
 			if (typeof registry?.getViewCreatorByType !== 'function') return null;
 			const factory = (registry.getViewCreatorByType as (type: string) => unknown).call(registry, 'bookmarks');
 			if (typeof factory !== 'function') return null;
-			// Construct offscreen; never load it, attach a workspace leaf, or subscribe to core events.
-			this.detached = (factory as (leaf: WorkspaceLeaf) => NativeView)(leaf);
+			// View constructors append DOM to their leaf even without load/onOpen.
+			// Shadow the live leaf's container before construction; never replace it temporarily.
+			const containerEl = (leaf as MenuLeaf).containerEl.ownerDocument.createElement('div');
+			const menuLeaf = Object.create(leaf) as MenuLeaf;
+			Object.defineProperty(menuLeaf, 'containerEl', { value: containerEl });
+			try {
+				const view = (factory as (leaf: WorkspaceLeaf) => NativeView)(menuLeaf);
+				this.detached = { view, containerEl };
+			} catch (error) {
+				containerEl.remove();
+				throw error;
+			}
 		}
-		return this.detached?.plugin === plugin && typeof this.detached.getItemDom === 'function' ? this.detached : null;
+		const view = this.detached.view;
+		return view.plugin === plugin && typeof view.getItemDom === 'function' ? view : null;
 	}
 
 	show(id: string, row: HTMLElement, leaf: WorkspaceLeaf, event: MouseEvent, extend?: (menu: Menu) => void): boolean {
